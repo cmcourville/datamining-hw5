@@ -20,7 +20,7 @@ def Terms_and_Conditions():
     '''
     #****************************************
     #* CHANGE CODE HERE
-    Read_and_Agree = False  #if you have read and agree with the term above, change "False" to "True".
+    Read_and_Agree = True  #if you have read and agree with the term above, change "False" to "True".
     #****************************************
     return Read_and_Agree
 
@@ -106,7 +106,11 @@ class TicTacToe(BoardGame):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-
+        m = []
+        for i in range(3):
+            for j in range(3):
+                if s.b[i][j] == 0:
+                    m.append((i, j))
 
         #########################################
         return m
@@ -138,21 +142,31 @@ class TicTacToe(BoardGame):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-
-
-
+        all_rows = []
+        array = np.asarray(s.b)
         # check the 8 lines in the board to see if the game has ended.
+        for i in range(3):
+            row = array[i,:]
+            column = array[:, i]
+            all_rows.append(row.tolist())
+            all_rows.append(column.tolist())
+        
+        diagonal1 = [array[i, i] for i in range(3)]
+        all_rows.append(diagonal1)
+
+        diagonal2 = [array[2, 0], array[1, 1], array[0, 2]]
+        all_rows.append(diagonal2)
+        if [1, 1, 1] in all_rows:
+            return 1
+        elif [-1, -1, -1] in all_rows:
+            return -1
 
 
         # if the game has ended, return the game result 
-
-
-
-
-
+        num_of_empty = np.count_nonzero(array == 0)
 
         # if the game has not ended, return None
-
+        return 0 if num_of_empty == 0 else None
         #########################################
         return e
     
@@ -245,6 +259,12 @@ class RandomPlayer(Player):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
+        
+        # compute value
+        g.get_valid_moves(s)
+
+        # find the best next move
+        r, c = node.p
 
         # find all valid moves in the current game state
 
@@ -492,14 +512,19 @@ class MMNode(Node):
         ## INSERT YOUR CODE HERE
 
         # get the list of valid next move-state pairs from the current game state
-
+        if TicTacToe.check(self.s) is not None:
+            return
 
         # expand the node with one level of children nodes 
-
-            # for each next move m and game state s, create a child node
-
+        all_moves = TicTacToe.avail_moves(self.s)
+        for r, c in all_moves:
+             # for each next move m and game state s, create a child node
+            s = np.copy(self.s)
+            s[r, c] = self.x
             # append the child node the child list of the current node 
-
+            node = Node(s, x=-self.x, m=(r, c))
+            self.c.append(node)
+           
         #########################################
 
     ''' TEST: Now you can test the correctness of your code above by typing `nosetests -v test1.py:test_expand' in the terminal.  '''
@@ -676,9 +701,14 @@ class MMNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
+        self.expand()
+
+        # recursively build a subtree from each child node
+        for node in self.c:
+            node.build_tree()
 
         # if the game in the current state has not ended yet 
-
+         
             #expand the current node by one-level of children nodes
 
             # recursion: for each child node, call build_tree() function 
