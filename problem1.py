@@ -259,13 +259,11 @@ class RandomPlayer(Player):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-        
-        # compute value
-        g.get_valid_moves(s)
-
-        # find the best next move
-        r, c = node.p
-
+        # find all valid moves in the current game state
+        moves = g.get_valid_moves(s)
+        # randomly choose one valid move
+        selected_move = np.random.randint(len(moves))
+        r,c=moves[selected_move]
         # find all valid moves in the current game state
 
         # randomly choose one valid move
@@ -510,21 +508,15 @@ class MMNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-
+   
         # get the list of valid next move-state pairs from the current game state
-        if TicTacToe.check(self.s) is not None:
-            return
-
-        # expand the node with one level of children nodes 
-        all_moves = TicTacToe.avail_moves(self.s)
-        for r, c in all_moves:
-             # for each next move m and game state s, create a child node
-            s = np.copy(self.s)
-            s[r, c] = self.x
-            # append the child node the child list of the current node 
-            node = Node(s, x=-self.x, m=(r, c))
+        moves = g.get_move_state_pairs(self.s)
+        # for each next move m and game state s, create a child node
+        for r,c in moves:   
+            # append the child node the child list of the current node            
+            node = MMNode(c, p=self, c=[], m=r)
             self.c.append(node)
-           
+
         #########################################
 
     ''' TEST: Now you can test the correctness of your code above by typing `nosetests -v test1.py:test_expand' in the terminal.  '''
@@ -701,14 +693,14 @@ class MMNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-        self.expand()
 
         # recursively build a subtree from each child node
-        for node in self.c:
-            node.build_tree()
-
+        if g.check_game(self.s) is None:
+                self.expand(g)
+                for node in self.c:
+                    node.build_tree(g)
         # if the game in the current state has not ended yet 
-         
+            
             #expand the current node by one-level of children nodes
 
             # recursion: for each child node, call build_tree() function 
@@ -874,7 +866,31 @@ class MMNode(Node):
         #########################################
         ## INSERT YOUR CODE HERE
         # (1) if the game has already ended, the value of the node is the game result 
+        result = g.check_game(self.s)
+        if result is not None:
+            self.v = result
+            return
 
+        # otherwise: compute scores/values of all children nodes - run the function for all its children
+        # Hint: you could use recursion to solve this problem.
+        if g.check_game(self.s) is None:
+            for node in self.c:
+                node.compute_v(g)
+
+
+        # set the value of the current node with the value of the best move
+        # Hint: depending on whether the current node is "X" or "O" player, you need to compute either max (if X player)
+        # or min (O player) of the values among the children nodes
+        values = np.array([node.v for node in self.c])
+        
+        if self.s.x == 1:
+            self.v = np.max(values)
+            self.p = self.c[np.argmax(values)].m
+        if self.s.x == -1:
+            self.v = np.min(values)
+            self.p = self.c[np.argmin(values)].m
+
+    
 
 
 
@@ -961,11 +977,20 @@ class MiniMaxPlayer(Player):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
+        data=[]
+        for child in n.c:
+            data.append((child.v,child.m))
+        if (n.s.x ==1):
+            val = True
+        elif (n.s.x == -1): #0 false 
+            val = False 
+        values= sorted(data,key=lambda x:x[0], reverse=val)
+        r,c = values[0][1]
+        print(r,c)
 
 
-
-
-
+        
+       
         #########################################
         return r,c
     
@@ -1000,14 +1025,14 @@ class MiniMaxPlayer(Player):
         ## INSERT YOUR CODE HERE
 
         # (1) build a search tree with the current game state as the root node
-
-
+        node = MMNode(s)
+        t = node.build_tree(g)
 
         # (2) compute values of all tree nodes
-
-
+        val = node.compute_v(g)
         # (3) choose the optimal next move
-
+        r,c = self.choose_optimal_move(node)
+      
         #########################################
         return r,c
 
