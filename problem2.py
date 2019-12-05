@@ -80,9 +80,11 @@ class MCNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
+
         x= RandomPlayer()
         o = RandomPlayer()
         e= g.run_a_game(x,o, s=self.s)
+        
         #########################################
         return e
     
@@ -180,18 +182,18 @@ class MCNode(Node):
         Hint: You could solve this problem using 4 lines of code.
         '''
         #########################################
+        
         ## INSERT YOUR CODE HERE
-
         # get the list of valid next move-state pairs from the current game state
-        moves = g.get_move_state_pairs(self.s)
         # for each next move m and game state s, create a child node
-        for r,c in moves:   
+        for r,c in g.get_move_state_pairs(self.s):   
             # append the child node the child list of the current node            
             node = MCNode(c, p=self, c=[], m=r)
             self.c.append(node)
         return self.c[0]
+
         #########################################
-        return c
+        
     
     ''' TEST: Now you can test the correctness of your code above by typing `nosetests -v test2.py:test_expand' in the terminal.  '''
 
@@ -286,11 +288,11 @@ class MCNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-        node = self
-        while node is not None:
-            node.N += 1
-            node.v += e
-            node = node.p
+
+        while self is not None:
+            self.N += 1
+            self.v += e
+            self = self.p
  
         #########################################
     
@@ -321,14 +323,12 @@ class MCNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-        
+
+        b = float("inf")
         if ni != 0:
             wi = (x*vi)/ni
             b = wi + (c* math.sqrt(np.log(N)/ni))
             
-        else:
-            b = float("inf")
-    
         #########################################
         return b
     
@@ -366,10 +366,10 @@ class MCNode(Node):
         ubc=[]
         for child in self.c:
             ubc.append(MCNode.compute_UCB(child.v, child.N,self.N, self.s.x))
-        c = self.c[np.argmax(ubc)]
+        return self.c[np.argmax(ubc)]
 
         #########################################
-        return c
+        
     
     
     ''' TEST: Now you can test the correctness of your code above by typing `nosetests -v test2.py:test_select_a_child' in the terminal.  '''
@@ -738,6 +738,7 @@ class MCTSPlayer(Player):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
+        
         data=[]
         for child in n.c:
             data.append((child.v,child.m))
@@ -747,6 +748,7 @@ class MCTSPlayer(Player):
             val = False 
         values= sorted(data,key=lambda x:x[0], reverse=val)
         r,c = values[0][1]
+
         #########################################
         return r,c
 
