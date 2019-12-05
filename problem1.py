@@ -106,6 +106,7 @@ class TicTacToe(BoardGame):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
+
         m = []
         for i in range(3):
             for j in range(3):
@@ -142,33 +143,35 @@ class TicTacToe(BoardGame):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-        all_rows = []
-        array = np.asarray(s.b)
+
+        aR = []
+        a = np.asarray(s.b)
         # check the 8 lines in the board to see if the game has ended.
         for i in range(3):
-            row = array[i,:]
-            column = array[:, i]
-            all_rows.append(row.tolist())
-            all_rows.append(column.tolist())
+            r = a[i,:]
+            col = a[:, i]
+            aR.append(r.tolist())
+            aR.append(col.tolist())
         
-        diagonal1 = [array[i, i] for i in range(3)]
-        all_rows.append(diagonal1)
+        d1 = [a[i, i] for i in range(3)]
+        aR.append(d1)
 
-        diagonal2 = [array[2, 0], array[1, 1], array[0, 2]]
-        all_rows.append(diagonal2)
-        if [1, 1, 1] in all_rows:
+        d2 = [a[2, 0], a[1, 1], a[0, 2]]
+        aR.append(d2)
+        if [1, 1, 1] in aR:
             return 1
-        elif [-1, -1, -1] in all_rows:
+        elif [-1, -1, -1] in aR:
             return -1
 
 
         # if the game has ended, return the game result 
-        num_of_empty = np.count_nonzero(array == 0)
+        empt = np.count_nonzero(a == 0)
 
         # if the game has not ended, return None
-        return 0 if num_of_empty == 0 else None
+        return 0 if empt == 0 else None
+
         #########################################
-        return e
+        
     
         ''' TEST: Now you can test the correctness of your code above by typing `nosetests -v test1.py:test_check_game' in the terminal.  '''
 
@@ -263,11 +266,9 @@ class RandomPlayer(Player):
         moves = g.get_valid_moves(s)
         # randomly choose one valid move
         selected_move = np.random.randint(len(moves))
-        r,c=moves[selected_move]
         # find all valid moves in the current game state
-
         # randomly choose one valid move
-
+        r,c=moves[selected_move]
 
         #########################################
         return r,c
@@ -866,9 +867,9 @@ class MMNode(Node):
         #########################################
         ## INSERT YOUR CODE HERE
         # (1) if the game has already ended, the value of the node is the game result 
-        result = g.check_game(self.s)
-        if result is not None:
-            self.v = result
+        r = g.check_game(self.s)
+        if r is not None:
+            self.v = r
             return
 
         # otherwise: compute scores/values of all children nodes - run the function for all its children
@@ -877,36 +878,23 @@ class MMNode(Node):
             for node in self.c:
                 node.compute_v(g)
 
-
         # set the value of the current node with the value of the best move
         # Hint: depending on whether the current node is "X" or "O" player, you need to compute either max (if X player)
         # or min (O player) of the values among the children nodes
         values = np.array([node.v for node in self.c])
-        
+           
+        # (2) if the game has not ended yet: 
+        #   (2.1)first compute values of all children nodes recursively by calling compute_v() in each child node
         if self.s.x == 1:
             self.v = np.max(values)
             self.p = self.c[np.argmax(values)].m
-        if self.s.x == -1:
-            self.v = np.min(values)
-            self.p = self.c[np.argmin(values)].m
-
-    
-
-
-
-
-        # (2) if the game has not ended yet: 
-        #   (2.1)first compute values of all children nodes recursively by calling compute_v() in each child node
-
-
-
 
         #   (2.2) now the values of all the children nodes are computed, let's compute the value of the current node:
         #       (2.2.1) if it is X player's turn, the value of the current node is the max of all children node's values 
         #       (2.2.2) if it is O player's turn, the value of the current node is the min of all children node's values 
-
-
-
+        if self.s.x == -1:
+            self.v = np.min(values)
+            self.p = self.c[np.argmin(values)].m
 
         #########################################
 
@@ -977,6 +965,7 @@ class MiniMaxPlayer(Player):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
+
         data=[]
         for child in n.c:
             data.append((child.v,child.m))
@@ -985,11 +974,7 @@ class MiniMaxPlayer(Player):
         elif (n.s.x == -1): #0 false 
             val = False 
         values= sorted(data,key=lambda x:x[0], reverse=val)
-        r,c = values[0][1]
-        print(r,c)
-
-
-        
+        r,c = values[0][1]       
        
         #########################################
         return r,c
