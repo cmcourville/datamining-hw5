@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------------
 # Note: please don't use any additional package except the following packages
+import math
 import numpy as np
 from problem1 import RandomPlayer, Node
 from game import BoardGame,Player 
@@ -79,8 +80,9 @@ class MCNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-
-
+        x= RandomPlayer()
+        o = RandomPlayer()
+        e= g.run_a_game(x,o, s=self.s)
         #########################################
         return e
     
@@ -181,13 +183,13 @@ class MCNode(Node):
         ## INSERT YOUR CODE HERE
 
         # get the list of valid next move-state pairs from the current game state
-
-        # expand the node with one level of children nodes 
-
-            # for each next move m and game state s, create a child node
-
-            # append the child node the child list of the current node 
-
+        moves = g.get_move_state_pairs(self.s)
+        # for each next move m and game state s, create a child node
+        for r,c in moves:   
+            # append the child node the child list of the current node            
+            node = MCNode(c, p=self, c=[], m=r)
+            self.c.append(node)
+        return self.c[0]
         #########################################
         return c
     
@@ -284,10 +286,12 @@ class MCNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-
-
-
-
+        node = self
+        while node is not None:
+            node.N += 1
+            node.v += e
+            node = node.p
+ 
         #########################################
     
     ''' TEST: Now you can test the correctness of your code above by typing `nosetests -v test2.py:test_backprop' in the terminal.  '''
@@ -317,10 +321,14 @@ class MCNode(Node):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-
-
-
-
+        
+        if ni != 0:
+            wi = (x*vi)/ni
+            b = wi + (c* math.sqrt(np.log(N)/ni))
+            
+        else:
+            b = float("inf")
+    
         #########################################
         return b
     
@@ -355,10 +363,10 @@ class MCNode(Node):
         #########################################
         ## INSERT YOUR CODE HERE
 
-
-
-
-
+        ubc=[]
+        for child in self.c:
+            ubc.append(MCNode.compute_UCB(child.v, child.N,self.N, self.s.x))
+        c = self.c[np.argmax(ubc)]
 
         #########################################
         return c
@@ -419,12 +427,15 @@ class MCNode(Node):
         ## INSERT YOUR CODE HERE
 
         # if the root node is a leaf node (no child), return root node
-
-
+        if len(self.c) == 0:
+          return self
+        UCBs = []
+        for node in self.c:
         # otherwise: select a child node (c) of the root node
-
+            b = MCNode.compute_UCB(node.v, node.N, self.N, self.s.x)
+            UCBs.append(b)
         #            recursively select the children nodes of node (c).
-
+        l = self.c[np.argmax(UCBs)].selection()
         #########################################
         return l
 
@@ -643,20 +654,23 @@ class MCNode(Node):
             #########################################
             ## INSERT YOUR CODE HERE
             # Step 1: selection: starting from root node, select one leaf node (L)
+            s1 = self.selection()
 
             # Step 2: expansion: if in the leaf node L, the game has not ended yet, 
             #                    expand node (L) with one level of children nodes
             #                    and then select one of L's children nodes (C) as the leaf node 
-
-
+            if g.check_game(s1.s) is None:
+                s1.expand(g)
+            s2 = s1.selection()
             # Step 3: simulation: sample a game result from the selected leaf node: 
             #               the selected node is node C (if L is not a terminal node)
             #                                 or node L (if L is a terminal node, game ended) 
-
+            a = s2.sample(g)
             # Step 4: back propagation: backprop the result of the game result 
-
+            s2.backprop(a)
+            
             #########################################
-    
+          
         ''' TEST: Now you can test the correctness of your code above by typing `nosetests -v test2.py:test_build_tree' in the terminal.  '''
 
 #-----------------------------------------------
@@ -724,11 +738,15 @@ class MCTSPlayer(Player):
         '''
         #########################################
         ## INSERT YOUR CODE HERE
-
-
-
-
-
+        data=[]
+        for child in n.c:
+            data.append((child.v,child.m))
+        if (n.s.x ==1):
+            val = True
+        elif (n.s.x == -1): #0 false 
+            val = False 
+        values= sorted(data,key=lambda x:x[0], reverse=val)
+        r,c = values[0][1]
         #########################################
         return r,c
 
@@ -755,13 +773,14 @@ class MCTSPlayer(Player):
         Hint: you could solve this problem using 3 lines of code.
         '''
         #########################################
+       
         ## INSERT YOUR CODE HERE
-        # create a tree node (n) with the current game state 
-
-        # build a search tree with the tree node (n) as the root and n_iter as the number of simulations
-
-        # choose the best next move: the children node of the root node with the largest N
-
+        node = MCNode(s)
+        # (2) compute values of all tree nodes
+        t = node.build_tree(g)
+        # (3) choose the optimal next move
+        r,c = self.choose_optimal_move(node)
+        
         #########################################
         return r,c
 
